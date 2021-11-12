@@ -1,0 +1,15 @@
+.cell{
+    width:20px;
+    height:20px;
+}
+.bomb{
+    width: 15px;
+    height: auto;
+}
+button{
+    width:20px;
+    height:20px;
+}
+table{
+    text-align: center;
+}
