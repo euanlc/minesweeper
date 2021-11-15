@@ -1,8 +1,11 @@
-const LONG=10
-const LARG=10
-const BOMB=LARG*LONG/10
+const LONG=10;
+const LARG=10;
+const BOMB=LARG*LONG/10;
 let tableInfo=[];
-function constructeurTabl(){
+let emplacement=[];
+let bomb = ".";
+
+function infoTableBuilder(){
     for(let j=0; j < LARG; j++) {
         tableInfo.push([]);
         for (let i = 0; i < LONG; i++) {
@@ -10,8 +13,8 @@ function constructeurTabl(){
         }
     }
 }
-let emplacement=[]
-function placement() {
+
+function bombPlacer() {
     let x
     let y
     let xy
@@ -35,12 +38,8 @@ function placement() {
 
     }
 }
-function bombPlacer(emplacement){
-    //cree tqblequ a partir d'emplacement
 
-}
-
-function tableBuilder(){
+function htmlTableBuilder(){
     /**
      * fonction qui cree l'html de la table
      */
@@ -51,7 +50,7 @@ function tableBuilder(){
     for(let j=0; j < LARG; j++) {
         row="";
         for (let i = 0; i < LONG; i++) {
-            cell = `<td id=${i+","+j} class="cell"><button class="gameButton"></button></td>`;
+            cell = `<td id=${i+","+j} class="cell"><button id=${i+"."+j} class="gameButton" onmousedown="clicker(event,this.id)"></button></td>`;
             row += cell;
         }
         row+="</tr>";
@@ -61,23 +60,43 @@ function tableBuilder(){
     container.innerHTML=completeTable;
     return completeTable;
 }
+function clicker(event,id){
+    console.log(event.button);
+    if(event.button === 0){
+        reveal(id);
+    }else if(event.button === 2){
+        if(document.getElementById(id).style.backgroundColor === "red"){
+            document.getElementById(id).style.backgroundColor = "initial";
+        }else {
+            document.getElementById(id).style.backgroundColor = "red";
+        }
+    }
+}
+let toBeRevealed = [];
+function findEmpty(id){
+    toBeRevealed.push(id);
+    let coordinates = around(id[0],id[2]);
+    for(let i in coordinates){
+        console.log(i)
+        if((tableInfo[coordinates[i][0]][coordinates[i][1]] === 0 )&&( !(coordinates[i].join(".") in toBeRevealed))){
+            findEmpty(coordinates[i].join("."));
+        }
+    }
+}
+function reveal(id){
+    document.getElementById(id).innerHTML = tableInfo[id[0]][id[2]];
+ }
 function numBomb() {
     for(let i=0;i<LONG;++i){
         for(let j=0;j<LONG;++j){
             for(let k = 0; k<emplacement.length;++k){
                 if(emplacement[k] === (i+","+j)){
                     console.log("bomb");
-                    tableInfo[i][j] = "<img class=\"bomb\"src=\"img/bomb.png\">";
+                    tableInfo[i][j] = bomb;
                     break;
                 }else{
                     tableInfo[i][j] = verifyNum(i,j);
                 }
-                //console.log(emplacement[k],"\n",i,j)
-                /*if(emplacement[k]!==(i+","+j)){
-                    tableInfo[i][j]=verifyNum(i,j);
-                }else{
-                    tableInfo[i][j]="BOMB";
-                }*/
             }
         }
     }
@@ -89,46 +108,32 @@ function checkForBomb(coord){
     }
     return bomb;
 }
+function around(x,y){
+    let defaultCoords = [[x-1,y-1],[x-1, y],[x-1, y+1],[x,y-1],[x, y+1],[x+1,y-1],[x+1, y],[x+1, y+1]];
+    let coords = [];
+    for(let i in defaultCoords){
+        if((defaultCoords[i][0] in tableInfo) && (defaultCoords[i][1] in tableInfo[defaultCoords[i][0]])){
+            coords.push(defaultCoords[i]);
+        }
+    }
+    return coords;
+}
 function verifyNum(i,j){
     let numBomb = 0;
-    if(checkForBomb((i-1)+","+(j-1))){
-        numBomb++;
-    }
-    if(checkForBomb((i-1)+","+(j))){
-        numBomb++;
-    }
-    if(checkForBomb((i)+","+(j-1))){
-        numBomb++;
-    }
-    if(checkForBomb((i-1)+","+(j+1))){
-        numBomb++;
-    }
-    if(checkForBomb((i+1)+","+(j-1))){
-        numBomb++;
-    }
-    if(checkForBomb((i)+","+(j+1))){
-        numBomb++;
-    }
-    if(checkForBomb((i+1)+","+(j+1))){
-        numBomb++;
-    }
-    if(checkForBomb((i+1)+","+(j))){
-        numBomb++;
+    let coordinates = around(i,j);
+    for(let i in coordinates){
+        if(checkForBomb(coordinates[i].join(","))){numBomb++;}
     }
     return numBomb;
 }
 function lancer() {
-    placement();
-    constructeurTabl();
+    bombPlacer();
+    infoTableBuilder();
     numBomb();
-    tableBuilder();
+    htmlTableBuilder();
 
-    let buttons = document.getElementsByClassName("gameButton");
-    function testFunction(){
-        var attribute = this.getAttribute("data-myattribute");
-        console.log(attribute);
-    }
-    for(let i = 0; i<buttons.length;i++){
-        buttons[i].addEventListener('click', testFunction);
-    }
+    // let buttons = document.getElementsByClassName("gameButton");
+    // for(let i = 0; i<buttons.length;i++){
+    //     buttons[i].addEventListener("mousedown",clicker())
+    // }
 }
