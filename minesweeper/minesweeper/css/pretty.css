@@ -9,6 +9,7 @@
 button{
     width:20px;
     height:20px;
+    background-color: initial;
 }
 table{
     text-align: center;

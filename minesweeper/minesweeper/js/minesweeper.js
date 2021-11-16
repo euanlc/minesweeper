@@ -5,15 +5,37 @@ let tableInfo=[];
 let emplacement=[];
 let bomb = ".";
 
-function infoTableBuilder(){
-    for(let j=0; j < LARG; j++) {
-        tableInfo.push([]);
-        for (let i = 0; i < LONG; i++) {
-            tableInfo[j].push("");
-        }
+
+//constructors
+function Cell(i,j){
+    this.cellId = i + "." + j;
+    this.numBomb = verifyNum(i,j);
+    this.isEmpty = this.numBomb === 0;
+    this.isRevealed = false;
+    this.isFlagged = false;
+    this.isBomb = false;
+    this.flag = function(){//a changer pour mettre un drapeau au lieu de juste changer la couleur
+        this.isFlagged = true;
+        document.getElementById(this.cellId).style.backgroundColor= "red";
+    };
+    this.unFlag = function (){
+        this.isFlagged = false;
+        document.getElementById(this.cellId).style.backgroundColor= "initial";
     }
 }
-
+function Bomb(i,j){
+    this.cellId = i + "." + j;
+    this.isFlagged = false;
+    this.isBomb = true;
+    this.flag = function(){//a changer pour mettre un drapeau au lieu de juste changer la couleur
+        this.isFlagged = true;
+        document.getElementById(this.cellId).style.backgroundColor= "red";
+    };
+    this.unFlag = function (){
+        this.isFlagged = false;
+        document.getElementById(this.cellId).style.backgroundColor= "initial";
+    }
+}
 function bombPlacer() {
     let x
     let y
@@ -38,19 +60,39 @@ function bombPlacer() {
 
     }
 }
-
+function infoTableBuilder(){
+    for(let j=0; j < LARG; j++) {
+        tableInfo.push([]);
+        for (let i = 0; i < LONG; i++) {
+            tableInfo[j].push("");
+        }
+    }
+    for(let i=0;i<LONG;++i){
+        for(let j=0;j<LONG;++j){
+            for(let k = 0; k<emplacement.length;++k){
+                if(emplacement[k] === (i+","+j)){
+                    console.log("bomb");
+                    tableInfo[i][j] = new Bomb(i,j);
+                    break;
+                }else{
+                    tableInfo[i][j] = new Cell(i,j);
+                }
+            }
+        }
+    }
+}
 function htmlTableBuilder(){
     /**
      * fonction qui cree l'html de la table
      */
     let container = document.getElementById("table");
-    let completeTable = "<table border='1'>";
+    let completeTable = "<table>";
     let row="<tr>";
     let cell;
     for(let j=0; j < LARG; j++) {
         row="";
         for (let i = 0; i < LONG; i++) {
-            cell = `<td id=${i+","+j} class="cell"><button id=${i+"."+j} class="gameButton" onmousedown="clicker(event,this.id)"></button></td>`;
+            cell = `<td id=${i+","+j} class="cell"><button id=${i+"."+j} class="gameButton" onclick="leftClicker(this.id)" oncontextmenu="rightClicker(this.id)"></button></td>`;
             row += cell;
         }
         row+="</tr>";
@@ -60,46 +102,45 @@ function htmlTableBuilder(){
     container.innerHTML=completeTable;
     return completeTable;
 }
-function clicker(event,id){
-    console.log(event.button);
-    if(event.button === 0){
-        reveal(id);
-    }else if(event.button === 2){
-        if(document.getElementById(id).style.backgroundColor === "red"){
-            document.getElementById(id).style.backgroundColor = "initial";
-        }else {
-            document.getElementById(id).style.backgroundColor = "red";
-        }
-    }
-}
-let toBeRevealed = [];
-function findEmpty(id){
-    toBeRevealed.push(id);
-    let coordinates = around(id[0],id[2]);
+//tools
+function verifyNum(i,j){
+    let numBomb = 0;
+    let coordinates = around(i,j);
     for(let i in coordinates){
-        console.log(i)
-        if((tableInfo[coordinates[i][0]][coordinates[i][1]] === 0 )&&( !(coordinates[i].join(".") in toBeRevealed))){
-            findEmpty(coordinates[i].join("."));
-        }
+        if(checkForBomb(coordinates[i].join(","))){numBomb++;}
     }
+    return numBomb;
 }
 function reveal(id){
-    document.getElementById(id).innerHTML = tableInfo[id[0]][id[2]];
- }
-function numBomb() {
-    for(let i=0;i<LONG;++i){
-        for(let j=0;j<LONG;++j){
-            for(let k = 0; k<emplacement.length;++k){
-                if(emplacement[k] === (i+","+j)){
-                    console.log("bomb");
-                    tableInfo[i][j] = bomb;
-                    break;
-                }else{
-                    tableInfo[i][j] = verifyNum(i,j);
-                }
+    if(!getCell(id).isBomb){
+        document.getElementById(id).innerHTML = getCell(id).numBomb;
+        getCell(id).isRevealed =true;
+        if(getCell(id).isEmpty){
+            cleaner(id);
+            console.log("i'm empty")
+        }
+    }else{
+        handleBomb(id);
+    }
+}
+function cleaner(id){
+    let surroundingCoords = around(+id[0],+id[2]);
+    let tempId;
+    for(let i in surroundingCoords){
+        tempId = surroundingCoords[i][0]+"."+surroundingCoords[i][1];
+        if(!getCell(tempId).isRevealed) {
+            document.getElementById(tempId).innerHTML = getCell(tempId).numBomb;
+            getCell(id).isRevealed =true;
+            if(getCell(tempId).isEmpty && !getCell(tempId).isRevealed){
+                cleaner(tempId);
+            }else{
+
             }
         }
     }
+}
+function getCell(id){
+    return tableInfo[+id[0]][+id[2]];
 }
 function checkForBomb(coord){
     let bomb = false;
@@ -118,18 +159,31 @@ function around(x,y){
     }
     return coords;
 }
-function verifyNum(i,j){
-    let numBomb = 0;
-    let coordinates = around(i,j);
-    for(let i in coordinates){
-        if(checkForBomb(coordinates[i].join(","))){numBomb++;}
+//event handlers
+function leftClicker(id){
+    if(getCell(id).isFlagged){}
+    else{
+        reveal(id);
     }
-    return numBomb;
 }
+function rightClicker(id){
+    if(getCell(id).isFlagged){
+        getCell(id).unFlag();
+    }else if(!getCell(id).isRevealed){
+        getCell(id).flag();
+    }
+}
+ function handleBomb(id){
+    if(getCell(id).isFlagged){}
+    else{
+        console.log("boom");
+    }
+ }
+
+//program
 function lancer() {
     bombPlacer();
     infoTableBuilder();
-    numBomb();
     htmlTableBuilder();
 
     // let buttons = document.getElementsByClassName("gameButton");
