@@ -112,13 +112,13 @@ function verifyNum(i,j){
     return numBomb;
 }
 function reveal(id){
-    if(!getCell(id).isBomb){
-        document.getElementById(id).innerHTML = getCell(id).numBomb;
+    if(!getCell(id).isBomb&&getCell(id).isEmpty){
         getCell(id).isRevealed =true;
-        if(getCell(id).isEmpty){
-            cleaner(id);
-            console.log("i'm empty")
-        }
+        cleaner(id);
+        document.getElementById(id).parentElement.style.display = "none";
+    }else if(!getCell(id).isBomb){
+        getCell(id).isRevealed =true;
+        document.getElementById(id).innerHTML = getCell(id).numBomb;
     }else{
         handleBomb(id);
     }
@@ -129,7 +129,11 @@ function cleaner(id){
     for(let i in surroundingCoords){
         tempId = surroundingCoords[i][0]+"."+surroundingCoords[i][1];
         if(!getCell(tempId).isRevealed) {
-            document.getElementById(tempId).innerHTML = getCell(tempId).numBomb;
+            if(getCell(tempId).isEmpty){
+                document.getElementById(tempId).style.display = "none";
+            }else{
+                document.getElementById(tempId).innerHTML = getCell(tempId).numBomb;
+            }
             getCell(id).isRevealed =true;
             if(getCell(tempId).isEmpty && !getCell(tempId).isRevealed){
                 cleaner(tempId);
